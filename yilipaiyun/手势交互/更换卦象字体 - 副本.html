@@ -319,6 +319,16 @@
         <canvas id="output-canvas"></canvas>
     </div>
 
+    <!-- 音乐控制图标 -->
+    <button id="music-btn" onclick="toggleBackgroundMusic()" class="fixed bottom-6 right-6 z-[230] p-3 rounded-full glass hover:bg-white/10 transition-all duration-300 group">
+        <iconify-icon icon="lucide:music" width="22" class="text-[#C084FC]" id="music-icon"></iconify-icon>
+    </button>
+
+    <!-- 背景音乐播放器 -->
+    <audio id="background-music" loop>
+        <source src="https://audio.fukit.cn/autoupload/f/Ym-E4MSzWrJbYj6ohY9pPNiO_OyvX7mIgxFBfDMDErs/20260116/xbTu/5ec8f58b4d90b3902a2679d6ee654a3d.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- 粒子效果提示 -->
     <div id="particle-hint">
         <div class="flex items-center gap-2 mb-1">
@@ -1973,6 +1983,49 @@ function onPatternMouseUp(e) {
             window.location.href = target;
         }
 
+        // 背景音乐（与主页状态同步）
+        let isMusicPlaying = true;
+        const backgroundMusic = document.getElementById('background-music');
+        const musicIcon = document.getElementById('music-icon');
+
+        function updateMusicIcon() {
+            if (!musicIcon) return;
+            musicIcon.setAttribute('icon', isMusicPlaying ? 'lucide:music' : 'lucide:music-2');
+        }
+
+        function applyMusicState() {
+            if (!backgroundMusic) return;
+            if (isMusicPlaying) {
+                backgroundMusic.play().catch(() => {});
+            } else {
+                backgroundMusic.pause();
+            }
+            updateMusicIcon();
+        }
+
+        function toggleBackgroundMusic() {
+            isMusicPlaying = !isMusicPlaying;
+            localStorage.setItem('bgmEnabled', isMusicPlaying ? '1' : '0');
+            applyMusicState();
+        }
+
+        function initBackgroundMusic() {
+            const saved = localStorage.getItem('bgmEnabled');
+            if (saved !== null) {
+                isMusicPlaying = saved === '1';
+            }
+            applyMusicState();
+
+            const resume = () => {
+                if (isMusicPlaying && backgroundMusic) {
+                    backgroundMusic.play().catch(() => {});
+                }
+            };
+            window.addEventListener('click', resume, { once: true });
+            window.addEventListener('keydown', resume, { once: true });
+            window.addEventListener('touchstart', resume, { once: true });
+        }
+
         function resetGame() {
     // 1. 隐藏卦象模态框
     const modal = document.getElementById('gua-modal');
@@ -2080,6 +2133,7 @@ function onPatternMouseUp(e) {
         });
 
         window.onload = async () => {
+            initBackgroundMusic();
             try {
                 document.getElementById('loading-text').innerText = "正在加载所有卡牌纹理...";
                 await loadAllTextures();
